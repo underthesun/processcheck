@@ -23,22 +23,11 @@ public class Node extends DraggableButton {
 
     private static int count = 0;
     private int id = 0;
-    private int proID;
+    private int proId;
     private ArrayList<Node> preNodes;
     private ArrayList<Node> postNodes;
     private NodePanel nodePanel;
     private NodeConfDialog dialog;
-    private ArrayList<Item> items = null;
-    private ArrayList<Item> itemsOriented = null;
-
-//    public Node(String name, Node preNode, Point p, NodePanel nodePanel) {
-//        super(name, p);
-//        this.nodePanel = nodePanel;
-//        this.dialog = nodePanel.getNodeDialog();
-//        this.preNodes = new ArrayList<Node>();
-//        this.postNodes = new ArrayList<Node>();
-//        addListener();
-//    }
     
     public static void resetCounter(){
         Node.count = 0;
@@ -46,7 +35,7 @@ public class Node extends DraggableButton {
     public Node(String text, Point p, int pid, NodePanel np) {
         super(text, p);
         this.id = count++;
-        this.proID = pid;
+        this.proId = pid;
         this.nodePanel = np;
         this.dialog = np.getNodeDialog();
         this.preNodes = new ArrayList<Node>();
@@ -89,7 +78,7 @@ public class Node extends DraggableButton {
     public ArrayList<Node> getNodesOfPostProcess() {
         ArrayList<Node> pNodes = new ArrayList<Node>();
         for (Node n : nodePanel.getNodes()) {
-            if (n.getProID() == proID + 1) {
+            if (n.getProID() == proId + 1) {
                 pNodes.add(n);
             }
         }
@@ -105,11 +94,11 @@ public class Node extends DraggableButton {
     }
 
     public int getProID() {
-        return proID;
+        return proId;
     }
 
     public void setProID(int proID) {
-        this.proID = proID;
+        this.proId = proID;
     }
 
     public ArrayList<Node> getPreNodes() {
@@ -144,22 +133,6 @@ public class Node extends DraggableButton {
         this.dialog = dialog;
     }
 
-    public ArrayList<Item> getItems() {
-        return items;
-    }
-
-    public void setItems(ArrayList<Item> items) {
-        this.items = items;
-    }
-
-    public ArrayList<Item> getItemsOriented() {
-        return itemsOriented;
-    }
-
-    public void setItemsOriented(ArrayList<Item> itemRelations) {
-        this.itemsOriented = itemRelations;
-    }
-
     public boolean hasPosts() {
         return postNodes.isEmpty() ? false : true;
     }
@@ -179,11 +152,11 @@ public class Node extends DraggableButton {
 
     public boolean checkAssociation() {
         boolean flag = true;
-        if (proID == 0) {
+        if (proId == 0) {
             if (postNodes.isEmpty()) {
                 flag = false;
             }
-        } else if (proID == nodePanel.getNodeProcess().size() - 1) {
+        } else if (proId == nodePanel.getNodeProcess().size() - 1) {
             if (preNodes.isEmpty()) {
                 flag = false;
             }

@@ -14,6 +14,7 @@ import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.geom.Line2D;
 import java.util.ArrayList;
+import javax.swing.UIManager;
 import processcheck.Node;
 import processcheck.NodeProcess;
 
@@ -22,7 +23,7 @@ import processcheck.NodeProcess;
  * @author shuai
  */
 public class NodePanel extends javax.swing.JPanel {
-
+    
     private ArrayList<NodeProcess> nodeProcess;
     private ArrayList<Node> nodes;
     private NodeConfDialog nodeDialog;
@@ -39,9 +40,10 @@ public class NodePanel extends javax.swing.JPanel {
         nodeDialog = new NodeConfDialog((Frame) getParent(), true, this);
         setLayout(null);
     }
-
+    
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+        setPreferredSize(new Dimension(getMaxWidth(), getMaxHeight()));
         //draw separation line
         if (!nodeProcess.isEmpty()) {
             int len = nodeProcess.size();
@@ -101,27 +103,61 @@ public class NodePanel extends javax.swing.JPanel {
     public ArrayList<NodeProcess> getNodeProcess() {
         return nodeProcess;
     }
-
+    
     public void setNodeProcess(ArrayList<NodeProcess> nodeProcess) {
         this.nodeProcess = nodeProcess;
     }
-
+    
     public ArrayList<Node> getNodes() {
         return nodes;
     }
-
+    
     public void setNodes(ArrayList<Node> nodes) {
         this.nodes = nodes;
     }
-
+    
     public NodeConfDialog getNodeDialog() {
         return nodeDialog;
     }
-
+    
     public void setNodeDialog(NodeConfDialog nodeDialog) {
         this.nodeDialog = nodeDialog;
     }
-
+    
+    public int getMaxWidth() {
+        int maxWidth = 0;
+        for (NodeProcess np : nodeProcess) {
+            int width = np.getLocation().x + np.getSize().width;
+            if (width > maxWidth) {
+                maxWidth = width;
+            }
+        }
+        for (Node node : nodes) {
+            int width = node.getLocation().x + node.getSize().width;
+            if (width > maxWidth) {
+                maxWidth = width;
+            }
+        }
+        return maxWidth;
+    }
+    
+    public int getMaxHeight() {
+        int maxHeight = 0;
+        for (NodeProcess np : nodeProcess) {
+            int height = np.getLocation().y + np.getSize().height;
+            if (height > maxHeight) {
+                maxHeight = height;
+            }
+        }
+        for (Node node : nodes) {
+            int width = node.getLocation().y + node.getSize().height;
+            if (width > maxHeight) {
+                maxHeight = width;
+            }
+        }
+        return maxHeight;
+    }
+    
     public void addNodeProcess(NodeProcess np) {
         add(np);
         nodeProcess.add(np);
@@ -138,7 +174,7 @@ public class NodePanel extends javax.swing.JPanel {
         setPreferredSize(new Dimension(width, height));
         revalidate();
     }
-
+    
     public void addNode(Node n) {
         add(n);
         nodes.add(n);
@@ -155,7 +191,7 @@ public class NodePanel extends javax.swing.JPanel {
         setPreferredSize(new Dimension(width, height));
         revalidate();
     }
-
+    
     public boolean isAllHaveNodes() {
         boolean flag = true;
         for (NodeProcess np : nodeProcess) {
@@ -167,7 +203,7 @@ public class NodePanel extends javax.swing.JPanel {
         }
         return flag;
     }
-
+    
     public boolean isAllAssociated() {
         boolean flag = true;
         if (nodeProcess.size() > 1) {
@@ -179,7 +215,7 @@ public class NodePanel extends javax.swing.JPanel {
         }
         return flag;
     }
-
+    
     public void reset() {
         for (NodeProcess np : nodeProcess) {
             np.reset();
@@ -191,7 +227,17 @@ public class NodePanel extends javax.swing.JPanel {
         nodes.clear();
         repaint();
     }
-
+    
+    public void colorResest() {
+        for (NodeProcess np : nodeProcess) {
+            np.setBackground(UIManager.getColor("Button.ground"));
+        }
+        for (Node node : nodes) {
+            node.setBackground(UIManager.getColor("Button.ground"));
+        }
+        repaint();
+    }
+    
     public NodeProcess getNextNodeProcess(NodeProcess np) {
         NodeProcess nextNp = null;
         int serial = np.getSerial();
@@ -200,7 +246,7 @@ public class NodePanel extends javax.swing.JPanel {
         }
         return nextNp;
     }
-
+    
     public NodeProcess getPreNodeProcess(NodeProcess np) {
         NodeProcess preNp = null;
         int serial = np.getSerial();

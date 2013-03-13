@@ -5,15 +5,16 @@
 package rfid;
 
 import java.util.ArrayList;
+import rfid.Package;
 
 /**
  *
  * @author shuai
  */
-public class Package extends Item {
+public class Package extends Item implements Cloneable {
 
-    private ArrayList<Item> items = null;
-    private ArrayList<Package> packages = null;
+    private ArrayList<Item> items = new ArrayList<Item>();
+//    private ArrayList<Package> packages = null;
 
     public Package(int id) {
         super(id);
@@ -27,14 +28,25 @@ public class Package extends Item {
         this.items = items;
     }
 
-    public ArrayList<Package> getPackages() {
-        return packages;
+    @Override
+    public Object clone() {
+        Package p = (Package) super.clone();
+        ArrayList<Item> its = new ArrayList<Item>();
+        for (Item item : items) {
+            Item o = (Item) item.clone();
+            its.add(o);
+        }
+        setItems(its);
+        return p;
     }
 
-    public void setPackages(ArrayList<Package> packages) {
-        this.packages = packages;
-    }
-
+//    public ArrayList<Package> getPackages() {
+//        return packages;
+//    }
+//
+//    public void setPackages(ArrayList<Package> packages) {
+//        this.packages = packages;
+//    }
     public static void main(String[] args) {
         ArrayList<Package> ps = new ArrayList<Package>();
         Package p1 = new Package(1);
@@ -60,5 +72,8 @@ public class Package extends Item {
         for (Package p : ps2) {
             System.out.println(p.getId());
         }
+
+        Package p3 = new Package(2);
+        System.out.println(p3.equals(p2));
     }
 }

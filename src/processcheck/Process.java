@@ -42,7 +42,7 @@ public class Process extends DraggableButton {
         this.dialog = pp.getConfDialog();
         this.postProcess = new ArrayList<Process>();
         addListener(this);
-        if(isAotom){
+        if (isAotom) {
             setBorder(new LineBorder(Color.green));
         }
     }
@@ -75,21 +75,24 @@ public class Process extends DraggableButton {
                         }
                     }
                 }
-                if (isAotom  && !isNumbered()) {
+                if (isAotom && !isNumbered()) {
                     Object input = JOptionPane.showInputDialog("输入原子过程序号");
                     if (input != null) {
-                        int sn = Integer.parseInt(input.toString());
-                        if (sn > 0) {
-                            setSerial(sn);
-                            setBackground(UIManager.getColor("Button.ground"));
-                            String s = getText() + "(" + sn + ")";
-                            setText(s);
-                            FontMetrics metrics = getFontMetrics(getFont());
-                            int width = metrics.stringWidth(s);
-                            int height = metrics.getHeight();
-                            Dimension newDimension = new Dimension(width + 30, height + 10);
-                            setPreferredSize(newDimension);
-                            setBounds(new Rectangle(getLocation(), newDimension));
+                        try {
+                            int sn = Integer.parseInt(input.toString());
+                            if (sn > 0) {
+                                setSerial(sn);
+                                setBackground(UIManager.getColor("Button.ground"));
+                                String s = getText() + "(" + sn + ")";
+                                setText(s);
+                                FontMetrics metrics = getFontMetrics(getFont());
+                                int width = metrics.stringWidth(s);
+                                int height = metrics.getHeight();
+                                Dimension newDimension = new Dimension(width + 30, height + 10);
+                                setPreferredSize(newDimension);
+                                setBounds(new Rectangle(getLocation(), newDimension));
+                            }
+                        } catch (NumberFormatException ne) {
                         }
                     }
                 }
@@ -140,9 +143,8 @@ public class Process extends DraggableButton {
     public boolean isNumbered() {
         return serial == -1 ? false : true;
     }
-    
-    public boolean hasPosts(){
+
+    public boolean hasPosts() {
         return !postProcess.isEmpty();
     }
-    
 }

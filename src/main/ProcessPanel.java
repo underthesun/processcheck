@@ -16,6 +16,8 @@ import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.geom.Line2D;
 import java.util.ArrayList;
+import processcheck.Node;
+import processcheck.NodeProcess;
 import processcheck.Process;
 
 /**
@@ -49,6 +51,7 @@ public class ProcessPanel extends javax.swing.JPanel {
     @Override
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+        setPreferredSize(new Dimension(getMaxWidth(), getMaxHeight()));
         for (Process p : processes) {
             points1 = p.getPoints();
             ArrayList<Process> postProcess = p.getPostProcess();
@@ -99,7 +102,29 @@ public class ProcessPanel extends javax.swing.JPanel {
     public void setProcesses(ArrayList<Process> processes) {
         this.processes = processes;
     }
-    
+
+    public int getMaxWidth() {
+        int maxWidth = 0;
+        for (Process p : processes) {
+            int width = p.getLocation().x + p.getSize().width;
+            if (width > maxWidth) {
+                maxWidth = width;
+            }
+        }
+        return maxWidth;
+    }
+
+    public int getMaxHeight() {
+        int maxHeight = 0;
+        for (Process p : processes) {
+            int height = p.getLocation().y + p.getSize().height;
+            if (height > maxHeight) {
+                maxHeight = height;
+            }
+        }
+        return maxHeight;
+    }
+
     public void addProcess(Process p) {
         add(p);
         processes.add(p);
@@ -124,19 +149,19 @@ public class ProcessPanel extends javax.swing.JPanel {
     public void setConfDialog(ProcessConfDialog confDialog) {
         this.confDialog = confDialog;
     }
-    
-    public void reset(){
+
+    public void reset() {
         removeAll();
         processes.clear();
         addRoot();
         revalidate();
         repaint();
     }
-    
-    public boolean isAllMarked(){
+
+    public boolean isAllMarked() {
         boolean flag = true;
-        for(Process p: processes){
-            if(p.isIsAotom() && !p.isNumbered()){
+        for (Process p : processes) {
+            if (p.isIsAotom() && !p.isNumbered()) {
                 flag = false;
                 p.setBackground(Color.red);
                 repaint();
@@ -144,5 +169,4 @@ public class ProcessPanel extends javax.swing.JPanel {
         }
         return flag;
     }
-    
 }

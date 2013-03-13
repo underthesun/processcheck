@@ -4,13 +4,35 @@
  */
 package main;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import components.NodeConfDialog;
+import java.awt.BorderLayout;
 import java.awt.Point;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import processcheck.Node;
 import processcheck.NodeProcess;
 import processcheck.Process;
+import rfid.Item;
+import sim.Check;
 import sim.Simulation;
+import util.DataPOJO;
+import util.ItemPOJO;
+import util.NodePOJO;
+import util.NodeProcessPOJO;
+import util.PackagePOJO;
+import util.ProcessPOJO;
 
 /**
  *
@@ -18,17 +40,25 @@ import sim.Simulation;
  */
 public class MainPanel extends javax.swing.JPanel {
 
+    private boolean isDataLoaded;
     private boolean isProcessPanel;
     private NodePanel nodePanel;
+    private DataPOJO data;
 
     /**
      * Creates new form MainPanel
      */
     public MainPanel() {
+        isDataLoaded = false;
         isProcessPanel = true;
         initComponents();
+        add(jMenuBar1, BorderLayout.NORTH);
+        test();
     }
-
+    public void test(){
+        openNodeStructure();
+        loadData();
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -38,10 +68,17 @@ public class MainPanel extends javax.swing.JPanel {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jMenuBar1 = new javax.swing.JMenuBar();
+        jMenu1 = new javax.swing.JMenu();
+        MnProsOpen = new javax.swing.JMenuItem();
+        MnProsSave = new javax.swing.JMenuItem();
+        jMenu2 = new javax.swing.JMenu();
+        MnDataLoad = new javax.swing.JMenuItem();
+        MnDataUnload = new javax.swing.JMenuItem();
         jPanel1 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
-        btnOK = new javax.swing.JButton();
+        btnSim = new javax.swing.JButton();
         jLabel3 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         btnCancel = new javax.swing.JButton();
@@ -50,6 +87,46 @@ public class MainPanel extends javax.swing.JPanel {
         jScrollPane1 = new javax.swing.JScrollPane();
         processPanel = new main.ProcessPanel();
 
+        jMenu1.setText("文件");
+
+        MnProsOpen.setText("打开");
+        MnProsOpen.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                MnProsOpenActionPerformed(evt);
+            }
+        });
+        jMenu1.add(MnProsOpen);
+
+        MnProsSave.setText("保存");
+        MnProsSave.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                MnProsSaveActionPerformed(evt);
+            }
+        });
+        jMenu1.add(MnProsSave);
+
+        jMenuBar1.add(jMenu1);
+
+        jMenu2.setText("数据");
+
+        MnDataLoad.setText("打开");
+        MnDataLoad.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                MnDataLoadActionPerformed(evt);
+            }
+        });
+        jMenu2.add(MnDataLoad);
+
+        MnDataUnload.setText("关闭");
+        MnDataUnload.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                MnDataUnloadActionPerformed(evt);
+            }
+        });
+        jMenu2.add(MnDataUnload);
+
+        jMenuBar1.add(jMenu2);
+
         setPreferredSize(new java.awt.Dimension(0, 0));
         setLayout(new java.awt.BorderLayout(0, 5));
 
@@ -57,17 +134,17 @@ public class MainPanel extends javax.swing.JPanel {
         jPanel1.add(jLabel1);
         jPanel1.add(jLabel2);
 
-        btnOK.setText("确定");
-        btnOK.addActionListener(new java.awt.event.ActionListener() {
+        btnSim.setText("Simulate");
+        btnSim.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnOKActionPerformed(evt);
+                btnSimActionPerformed(evt);
             }
         });
-        jPanel1.add(btnOK);
+        jPanel1.add(btnSim);
         jPanel1.add(jLabel3);
         jPanel1.add(jLabel4);
 
-        btnCancel.setText("取消");
+        btnCancel.setText("Cancel");
         btnCancel.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnCancelActionPerformed(evt);
@@ -93,7 +170,7 @@ public class MainPanel extends javax.swing.JPanel {
         }
     }//GEN-LAST:event_btnCancelActionPerformed
 
-    private void btnOKActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOKActionPerformed
+    private void btnSimActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSimActionPerformed
         // TODO add your handling code here:
         if (isProcessPanel) {
             if (!processPanel.isAllMarked()) {
@@ -107,25 +184,65 @@ public class MainPanel extends javax.swing.JPanel {
                 JOptionPane.showOptionDialog(this, "每个过程至少有一个进程", "提醒", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, null, new Object[]{"确定"}, "确定");
             } else if (!nodePanel.isAllAssociated()) {
                 JOptionPane.showOptionDialog(this, "进程缺少必要关联", "提醒", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, null, new Object[]{"确定"}, "确定");
+            } else if (!isDataLoaded) {
+                disableBtns();
+                Simulation sim = new Simulation(nodePanel);
+                sim.initSimData();
+                sim.startSim();
+                enableBtns();
             } else {
                 disableBtns();
-                Simulation sim = new Simulation();
-                sim.setNodeProcess(nodePanel.getNodeProcess());
-                sim.init();
-                sim.start();
+                Check check = new Check(nodePanel);
+                check.intiCheckData(data);
+                check.startCheck();
                 enableBtns();
             }
         }
-    }//GEN-LAST:event_btnOKActionPerformed
+    }//GEN-LAST:event_btnSimActionPerformed
+
+    private void MnProsSaveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_MnProsSaveActionPerformed
+        // TODO add your handling code here:
+        if (!isProcessPanel) {
+            if (!nodePanel.isAllHaveNodes()) {
+                JOptionPane.showOptionDialog(this, "每个过程至少有一个进程", "提醒", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, null, new Object[]{"确定"}, "确定");
+            } else if (!nodePanel.isAllAssociated()) {
+                JOptionPane.showOptionDialog(this, "进程缺少必要关联", "提醒", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, null, new Object[]{"确定"}, "确定");
+            } else {
+                saveNodeStructure();
+            }
+        }
+    }//GEN-LAST:event_MnProsSaveActionPerformed
+
+    private void MnProsOpenActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_MnProsOpenActionPerformed
+        // TODO add your handling code here:
+        openNodeStructure();
+    }//GEN-LAST:event_MnProsOpenActionPerformed
+
+    private void MnDataLoadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_MnDataLoadActionPerformed
+        // TODO add your handling code here:
+        loadData();
+    }//GEN-LAST:event_MnDataLoadActionPerformed
+
+    private void MnDataUnloadActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_MnDataUnloadActionPerformed
+        // TODO add your handling code here:
+        isDataLoaded = false;
+    }//GEN-LAST:event_MnDataUnloadActionPerformed
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenuItem MnDataLoad;
+    private javax.swing.JMenuItem MnDataUnload;
+    private javax.swing.JMenuItem MnProsOpen;
+    private javax.swing.JMenuItem MnProsSave;
     private javax.swing.JButton btnCancel;
-    private javax.swing.JButton btnOK;
+    private javax.swing.JButton btnSim;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
+    private javax.swing.JMenu jMenu1;
+    private javax.swing.JMenu jMenu2;
+    private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private main.ProcessPanel processPanel;
@@ -173,12 +290,204 @@ public class MainPanel extends javax.swing.JPanel {
     }
 
     public void disableBtns() {
-        this.btnOK.setEnabled(false);
+        this.btnSim.setEnabled(false);
         this.btnCancel.setEnabled(false);
     }
 
     public void enableBtns() {
-        this.btnOK.setEnabled(true);
+        this.btnSim.setEnabled(true);
         this.btnCancel.setEnabled(true);
+    }
+
+    public ArrayList<NodeProcessPOJO> getNodeProcessPOJO() {
+        ArrayList<NodeProcessPOJO> nodeProcessPOJO = new ArrayList<NodeProcessPOJO>();
+        ArrayList<NodeProcess> nodeProcess = nodePanel.getNodeProcess();
+        for (NodeProcess np : nodeProcess) {
+            NodeProcessPOJO npPOJO = new NodeProcessPOJO();
+            ArrayList<Node> nodes = np.getNodes();
+            int[] nodeIds = new int[nodes.size()];
+            for (int i = 0; i < nodeIds.length; i++) {
+                nodeIds[i] = nodes.get(i).getId();
+            }
+            npPOJO.setName(np.getText());
+            npPOJO.setNodes(nodeIds);
+            npPOJO.setDimension(np.getPreferredSize());
+            npPOJO.setPoint(np.getLocation());
+            npPOJO.setSerial(np.getSerial());
+            nodeProcessPOJO.add(npPOJO);
+        }
+        return nodeProcessPOJO;
+    }
+
+    public ArrayList<NodePOJO> getNodePOJO() {
+        ArrayList<NodePOJO> nodePOJO = new ArrayList<NodePOJO>();
+        ArrayList<Node> nodes = nodePanel.getNodes();
+        for (Node node : nodes) {
+            NodePOJO nPOJO = new NodePOJO();
+            ArrayList<Node> preNodes = node.getPreNodes();
+            ArrayList<Node> postNodes = node.getPostNodes();
+            int[] preIds = new int[preNodes.size()];
+            int[] postIds = new int[postNodes.size()];
+
+            for (int i = 0; i < preIds.length; i++) {
+                preIds[i] = preNodes.get(i).getId();
+            }
+            for (int i = 0; i < postIds.length; i++) {
+                postIds[i] = postNodes.get(i).getId();
+            }
+
+            nPOJO.setName(node.getText());
+            nPOJO.setDimension(node.getPreferredSize());
+            nPOJO.setId(node.getId());
+            nPOJO.setPoint(node.getLocation());
+            nPOJO.setProId(node.getProID());
+            nPOJO.setPostNodes(postIds);
+            nPOJO.setPreNodes(preIds);
+            nodePOJO.add(nPOJO);
+        }
+        return nodePOJO;
+    }
+
+    public void saveNodeStructure() {
+        JFileChooser fc = new JFileChooser();
+        if (fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File saveFile = fc.getSelectedFile();
+            if (!saveFile.exists()) {
+                try {
+                    saveFile.createNewFile();
+                } catch (IOException ex) {
+                    Logger.getLogger(MainPanel.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            BufferedWriter bw = null;
+            try {
+                bw = new BufferedWriter(new FileWriter(saveFile));
+                Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+                ArrayList<NodeProcessPOJO> nodeProcessPOJO = getNodeProcessPOJO();
+                ArrayList<NodePOJO> nodePOJO = getNodePOJO();
+                ProcessPOJO pojo = new ProcessPOJO();
+                pojo.setNodeProcessPOJO(nodeProcessPOJO);
+                pojo.setNodePOJO(nodePOJO);
+                gson.toJson(pojo, ProcessPOJO.class, bw);
+            } catch (IOException ex) {
+                Logger.getLogger(MainPanel.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+                try {
+                    bw.close();
+                } catch (IOException ex) {
+                    Logger.getLogger(MainPanel.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+    }
+
+    public void openNodeStructure() {
+        JFileChooser fc = new JFileChooser();
+        if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File openFile = fc.getSelectedFile();
+            if (openFile != null) {
+                nodePanel = new NodePanel();
+                nodePanel.setNodeDialog(new NodeConfDialog(null, true, nodePanel));
+                remove(processPanel);
+                jScrollPane1.setViewportView(nodePanel);
+                nodePanel.removeAll();
+                BufferedReader br = null;
+                try {
+                    br = new BufferedReader(new FileReader(openFile));
+                    Gson gson = new Gson();
+                    ProcessPOJO pojo = gson.fromJson(br, ProcessPOJO.class);
+                    ArrayList<NodeProcessPOJO> nodeProcessPOJO = pojo.getNodeProcessPOJO();
+                    ArrayList<NodePOJO> nodePOJO = pojo.getNodePOJO();
+
+                    ArrayList<Node> nodes = new ArrayList<Node>();
+                    Node.resetCounter();
+                    for (NodePOJO npojo : nodePOJO) {
+                        String name = npojo.getName();
+                        int proId = npojo.getProId();
+                        Point point = npojo.getPoint();
+                        Node node = new Node(name, point, proId, nodePanel);
+                        node.setId(npojo.getId());
+                        node.setPreferredSize(npojo.getDimension());
+                        nodePanel.add(node);
+                        nodes.add(node);
+                    }
+                    for (Node node : nodes) {
+                        int[] preIds = null;
+                        int[] postIds = null;
+                        for (NodePOJO npojo : nodePOJO) {
+                            if (npojo.getId() == node.getId()) {
+                                preIds = npojo.getPreNodes();
+                                postIds = npojo.getPostNodes();
+                            }
+                        }
+                        for (Node n : nodes) {
+                            for (int id : preIds) {
+                                if (n.getId() == id) {
+                                    node.getPreNodes().add(n);
+                                }
+                            }
+                            for (int id : postIds) {
+                                if (n.getId() == id) {
+                                    node.getPostNodes().add(n);
+                                }
+                            }
+                        }
+                    }
+
+                    ArrayList<NodeProcess> nodeProcess = new ArrayList<NodeProcess>();
+                    for (NodeProcessPOJO npo : nodeProcessPOJO) {
+                        String name = npo.getName();
+                        Point point = npo.getPoint();
+                        int serial = npo.getSerial();
+                        int[] nodeIds = npo.getNodes();
+                        NodeProcess np = new NodeProcess(name, point, serial, nodePanel);
+                        np.setPreferredSize(npo.getDimension());
+                        ArrayList<Node> nodesContained = new ArrayList<Node>();
+                        for (int i = 0; i < nodeIds.length; i++) {
+                            for (Node node : nodes) {
+                                if (node.getId() == nodeIds[i]) {
+                                    nodesContained.add(node);
+                                }
+                            }
+                        }
+                        np.setNodes(nodesContained);
+                        nodeProcess.add(np);
+                        nodePanel.add(np);
+                    }
+                    nodePanel.setNodes(nodes);
+                    nodePanel.setNodeProcess(nodeProcess);
+                    nodePanel.revalidate();
+                    nodePanel.repaint();
+                } catch (IOException ex) {
+                    Logger.getLogger(MainPanel.class.getName()).log(Level.SEVERE, null, ex);
+                } finally {
+                    try {
+                        br.close();
+                    } catch (IOException ex) {
+                        Logger.getLogger(MainPanel.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }
+            isProcessPanel = false;
+        }
+    }
+
+    public void loadData() {
+        JFileChooser fc = new JFileChooser();
+        if (fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            File openFile = fc.getSelectedFile();
+            if (openFile != null) {
+                BufferedReader br = null;
+                try {
+                    br = new BufferedReader(new FileReader(openFile));
+                } catch (FileNotFoundException ex) {
+                    Logger.getLogger(MainPanel.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                Gson gson = new Gson();
+                this.data = gson.fromJson(br, DataPOJO.class);
+            }
+            isDataLoaded = true;
+        }
     }
 }

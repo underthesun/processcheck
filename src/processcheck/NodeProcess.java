@@ -14,7 +14,6 @@ import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.border.LineBorder;
 import main.NodePanel;
-import rfid.Item;
 
 /**
  *
@@ -25,8 +24,6 @@ public class NodeProcess extends DraggableButton {
     private int serial;
     private ArrayList<Node> nodes;
     private NodePanel nodePanel;
-    private ArrayList<Item> items = null;
-    private ArrayList<Item> itemsOriented = null;
 
     public NodeProcess(String s, Point p, int serial, NodePanel np) {
         super(s, p);
@@ -83,27 +80,13 @@ public class NodeProcess extends DraggableButton {
         this.nodePanel = nodePanel;
     }
 
-    public ArrayList<Item> getItems() {
-        return items;
-    }
-
-    public void setItems(ArrayList<Item> items) {
-        this.items = items;
-    }
-
-    public ArrayList<Item> getItemsOriented() {
-        return itemsOriented;
-    }
-
-    public void setItemsOriented(ArrayList<Item> itemsOriented) {
-        this.itemsOriented = itemsOriented;
-    }
-
     public boolean hasNodes() {
         return !nodes.isEmpty();
     }
 
     public void reset() {
+        setBackground(UIManager.getColor("Button.ground"));
+        repaint();
         nodes.clear();
     }
 
